@@ -7,6 +7,7 @@ const {
   createPost,
   getAllPosts,
   updatePost,
+  deletePost,
   getPostById,
 } = require('../db');
 
@@ -35,6 +36,17 @@ postsRouter.get('/', async (req, res, next) => {
   } catch ({ name, message }) {
     next({ name, message });
   }
+});
+
+postsRouter.get('/:postId', async (req, res, next) => { 
+  try {
+    const result = await getPostById(req.params.postId);
+    console.log(result);
+    res.send(result);
+  } catch (error) {console.log(error);
+  res.send("Error");
+}
+  
 });
 
 postsRouter.post('/', requireUser, async (req, res, next) => {
@@ -98,7 +110,13 @@ postsRouter.patch('/:postId', requireUser, async (req, res, next) => {
 });
 
 postsRouter.delete('/:postId', requireUser, async (req, res, next) => {
-  res.send({ message: 'under construction' });
+  try{ 
+    const result = await deletePost(req.params.postId);
+    res.send(result);
+
+  } catch(err){
+    console.log(err);
+  }
 });
 
 module.exports = postsRouter;

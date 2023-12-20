@@ -2,7 +2,10 @@ const { Client } = require('pg') // imports the pg module
 
 const client = new Client({
   connectionString: process.env.DATABASE_URL || 'postgres://localhost:5432/juicebox-dev',
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined,
+  ssl: process.env.NODE_ENV === 'production'
+   ? { rejectUnauthorized: false } 
+   : undefined,
+
 });
 
 /**
@@ -17,8 +20,8 @@ async function createUser({
 }) {
   try {
     const { rows: [ user ] } = await client.query(`
-      INSERT INTO users(username, password, name) 
-      VALUES($1, $2, $3) 
+      INSERT INTO users(username, password, name, location) 
+      VALUES($1, $2, $3, $4) 
       ON CONFLICT (username) DO NOTHING 
       RETURNING *;
     `, [username, password, name, location]);
@@ -96,14 +99,16 @@ async function getUserByUsername(username) {
       SELECT *
       FROM users
       WHERE username=$1
-    `, [ username ]);
+    `, [ username ]
+    );
+    console.log(user);
 
-    if (!user) {
-      throw {
-        name: "UserNotFoundError",
-        message: "A user with that username does not exist"
-      }
-    }
+    // if (!user) {
+    //   throw {
+    //     name: "UserNotFoundError",
+    //     message: "A user with that username does not exist"
+    //   }
+    // }
 
     return user;
   } catch (error) {
@@ -182,6 +187,20 @@ async function updatePost(postId, fields = {}) {
     return await getPostById(postId);
   } catch (error) {
     throw error;
+  }
+}
+
+async function deletePost(postId){
+  try {
+    const {
+      rows: [post],
+    } = await client.query(
+      `DELETE FROM posts WHERE id=$1 RETURNING *`,
+      [postId]
+    );
+    return post;
+  } catch(err){
+    console.log(err);
   }
 }
 
@@ -283,7 +302,7 @@ async function getPostsByTagName(tagName) {
 
 async function createTags(tagList) {
   if (tagList.length === 0) {
-    return;
+    return tagList;
   }
 
   const valuesStringInsert = tagList.map(
@@ -364,6 +383,7 @@ module.exports = {
   getPostById,
   createPost,
   updatePost,
+  deletePost,
   getAllPosts,
   getPostsByUser,
   getPostsByTagName,
